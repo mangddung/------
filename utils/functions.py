@@ -18,7 +18,7 @@ search_filter = [
 panel_message_list = {
     'resume' : "▶ 재생",
     'pause' : "∥ 중지",
-    'skip' : "■ 스킵"
+    'skip' : "▶| 스킵"
 }
 
 def get_video_url(query,search_count=1):
@@ -99,6 +99,7 @@ async def create_panel_form(channel):
         voice_client = channel.guild.voice_client
         if voice_client:
             voice_client.stop()
+            #스킵 한 후 다음 곡 여부 확인해서 패널 업데이트
             await interaction.response.edit_message(content="곡이 스킵되었습니다.", view=view)
 
     play_btn.callback = play_btn_callback  # 중지, 재생 버튼
@@ -128,7 +129,7 @@ def write_config(config, filename='config.txt'):
         for key, value in config.items():
             file.write(f"{key}={value}\n")
 
-def playing_panel_form(video_info, requester):
+def playing_panel_form(video_info):
     embed = discord.Embed(
         title = video_info['title'],
         url = video_info['url'],
@@ -136,7 +137,7 @@ def playing_panel_form(video_info, requester):
         color=discord.Color.default()
     )
     embed.set_image(url=video_info['thumbnail'])
-    embed.add_field(name="요청자", value=requester, inline=True)
+    embed.add_field(name="요청자", value=video_info['requester'], inline=True)
     embed.add_field(name="영상 길이", value=video_info['duration'], inline=True)
 
     return embed

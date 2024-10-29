@@ -126,6 +126,7 @@ async def play(message):
     else:
         voice_client = bot_voice_channel
 
+    video_info['requester'] = message.author.mention
     play_queue.append(video_info)
     panel_message = await message.channel.fetch_message(int(config['MESSAGE_ID']))
     #대기열 등록
@@ -135,7 +136,7 @@ async def play(message):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             url2 = info['url']
-        await panel_message.edit(embed=playing_panel_form(video_info,message.author))
+        await panel_message.edit(embed=playing_panel_form(video_info))
         voice_client.play(discord.FFmpegPCMAudio(executable=ffmpeg_path, source=url2, **ffmpeg_options), after=play_next_music)
 
 #명령어
@@ -158,6 +159,7 @@ async def control_pannel(ctx):
     panel_message_id = await create_panel_form(ctx.channel)
     config['MESSAGE_ID'] = panel_message_id
     write_config(config)
+    await ctx.message.delete()
 
 @bot.command(name="skip")
 async def st(ctx):
