@@ -1,20 +1,12 @@
 '''
-음악 정보에 명령어 입력자 표시(현재 이름만 표시)
-GUI 완성
-(곡 변경 및 스킵시 패널 업데이트)
-버튼 기능 수정하기
-(중지 -> 대기 등록 했을때 다음곡 재생되는 문제)
-(스킵 안되는 문제)
+드롭다운 메뉴 선택시 해당곡 재생으로 바꾸기
 '''
 
 import asyncio
-import os
 from dotenv import load_dotenv
 import discord
 from discord.ext import commands
-import sqlite3
 import yt_dlp
-from youtubesearchpython import VideosSearch
 from utils.functions import *
 
 load_dotenv()
