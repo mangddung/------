@@ -103,7 +103,7 @@ async def play(message):
     
     voice_channel = message.author.voice.channel
     bot_voice_channel = message.guild.voice_client
-    query = message.content
+    query = message.content.strip()
 
     #노래 이름 검색
     if not query.startswith("http"):
