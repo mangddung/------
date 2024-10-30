@@ -78,11 +78,11 @@ async def create_panel_form(channel,play_queue = []):
     skip_btn = discord.ui.Button(label=panel_message_list['skip'], style=discord.ButtonStyle.secondary)
     if play_queue:
         if len(play_queue) > 1:
-            options = [
-                discord.SelectOption(label=music['title'],
-                                    description=f"요청자: {music['requester']}, 영상 길이: {music['duration']}")
-                for music in play_queue[1:10]
-            ]
+            options = []
+            for music in play_queue[1:10]:
+                member = channel.guild.get_member(int(music['requester'].strip("<@!>")))
+                requester_nick = member.nick if member.nick else "서버에 없습니다."
+                options.append(discord.SelectOption(label=music['title'], description=f"요청자: {requester_nick}, 영상 길이: {music['duration']}"))
             placeholder = f"다음 노래가 {len(play_queue)-1}개 있어요"
         else: 
             options = [discord.SelectOption(label="없어요."),]
