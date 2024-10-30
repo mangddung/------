@@ -3,13 +3,11 @@
 '''
 
 import asyncio
-from dotenv import load_dotenv
 import discord
 from discord.ext import commands
 import yt_dlp
 from utils.functions import *
 
-load_dotenv()
 ffmpeg_path = "C:\\ffmpeg\\bin\\ffmpeg.exe"  # FFmpeg 경로
 
 config = read_config()
