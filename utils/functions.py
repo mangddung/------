@@ -68,7 +68,6 @@ def get_video_info_from_url(url):
         'duration': video_duration,
         'thumbnail' : video_thumbnail
         }
-    print(video)
     return video
 
 async def create_panel_form(channel,play_queue = []):
@@ -81,7 +80,7 @@ async def create_panel_form(channel,play_queue = []):
             options = []
             for music in play_queue[1:10]:
                 member = channel.guild.get_member(int(music['requester'].strip("<@!>")))
-                requester_nick = member.nick if member.nick else "서버에 없습니다."
+                requester_nick = member.nick if member.nick else "Unknown"
                 options.append(discord.SelectOption(label=music['title'], description=f"요청자: {requester_nick}, 영상 길이: {music['duration']}"))
             placeholder = f"다음 노래가 {len(play_queue)-1}개 있어요"
         else: 
