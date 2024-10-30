@@ -71,28 +71,43 @@ def get_video_info_from_url(url):
     print(video)
     return video
 
-async def create_panel_form(channel):
+async def create_panel_form(channel,play_queue = []):
     view = discord.ui.View()
     # 버튼 생성
     play_btn = discord.ui.Button(label=panel_message_list['pause'], style=discord.ButtonStyle.secondary)
     skip_btn = discord.ui.Button(label=panel_message_list['skip'], style=discord.ButtonStyle.secondary)
+    if play_queue:
+        if len(play_queue) > 1:
+            options = [
+                discord.SelectOption(label=music['title'],
+                                    description=f"요청자: {music['requester']}, 영상 길이: {music['duration']}")
+                for music in play_queue[1:10]
+            ]
+            placeholder = f"다음 노래가 {len(play_queue)-1}개 있어요"
+        else: 
+            options = [discord.SelectOption(label="없어요."),]
+            placeholder = "다음 노래가 없어요."
+        embed = playing_embed_form(play_queue[0])
+    else:
+        embed = discord.Embed (title="다음 대기중인 곡이 없어요.")
+        options = [discord.SelectOption(label="없어요."),]
+        placeholder = "다음 노래가 없어요."
+    queue_dropdown = discord.ui.Select(placeholder=placeholder, options=options, min_values=1, max_values=1) #다음곡 선택 재생 기능 만들때  max_value바꾸기
 
     # 중지, 재생 버튼
     async def play_btn_callback(interaction):
-        #재생
+        voice_client = channel.guild.voice_client
+        if not voice_client:
+            await interaction.response.send_message("음성 채널에 접속해 주세요.", ephemeral=True)
+            return
         if play_btn.label == panel_message_list['resume']:
-            voice_client = channel.guild.voice_client
-            if voice_client:
-                voice_client.resume()
-                play_btn.label = panel_message_list['pause']
-                await interaction.response.edit_message(content="곡을 재생합니다.", view=view)
-        #중지
+            voice_client.resume()
+            play_btn.label = panel_message_list['pause']
+            await interaction.response.edit_message(content="곡을 재생합니다.", view=view)
         else:
-            voice_client = channel.guild.voice_client
-            if voice_client:
-                voice_client.pause()
-                play_btn.label = panel_message_list['resume']
-                await interaction.response.edit_message(content="곡을 중지합니다.", view=view)
+            voice_client.pause()
+            play_btn.label = panel_message_list['resume']
+            await interaction.response.edit_message(content="곡을 중지합니다.", view=view)
 
     # 스킵 버튼
     async def skip_btn_callback(interaction):
@@ -102,19 +117,36 @@ async def create_panel_form(channel):
             #스킵 한 후 다음 곡 여부 확인해서 패널 업데이트
             await interaction.response.edit_message(content="곡이 스킵되었습니다.", view=view)
 
+    #대기열 목록
+    async def queue_dropdown_callback(interaction: discord.Interaction):
+        if len(play_queue) > 1:
+            await interaction.response.send_message("아직 기능 없어",ephemeral=True)
+        else:
+            await interaction.response.send_message("아니 없어요",ephemeral=True)
+    
     play_btn.callback = play_btn_callback  # 중지, 재생 버튼
     skip_btn.callback = skip_btn_callback  # 스킵 버튼
+    queue_dropdown.callback = queue_dropdown_callback
 
     # 버튼을 포함한 뷰 생성
+    view.add_item(queue_dropdown)
     view.add_item(play_btn)
     view.add_item(skip_btn)
-    
-    embed = discord.Embed (
-        title="현재 재생중인 곡이 없어요."
-    )
-    interact = await channel.send(embed=embed, view=view)
 
-    return interact.id
+    return embed,view
+
+def playing_embed_form(video_info):
+    embed = discord.Embed(
+        title = video_info['title'],
+        url = video_info['url'],
+        description="",
+        color=discord.Color.default()
+    )
+    embed.set_image(url=video_info['thumbnail'])
+    embed.add_field(name="요청자", value=video_info['requester'], inline=True)
+    embed.add_field(name="영상 길이", value=video_info['duration'], inline=True)
+
+    return embed
 
 def read_config(filename='config.txt'):
     config = {}
@@ -128,16 +160,3 @@ def write_config(config, filename='config.txt'):
     with open(filename, 'w') as file:
         for key, value in config.items():
             file.write(f"{key}={value}\n")
-
-def playing_panel_form(video_info):
-    embed = discord.Embed(
-        title = video_info['title'],
-        url = video_info['url'],
-        description="",
-        color=discord.Color.default()
-    )
-    embed.set_image(url=video_info['thumbnail'])
-    embed.add_field(name="요청자", value=video_info['requester'], inline=True)
-    embed.add_field(name="영상 길이", value=video_info['duration'], inline=True)
-
-    return embed

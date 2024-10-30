@@ -7,6 +7,7 @@ GUI 완성
 (스킵 안되는 문제)
 '''
 
+import asyncio
 import os
 from dotenv import load_dotenv
 import discord
@@ -56,7 +57,9 @@ async def on_ready():
         channel = bot.get_channel(own_channel_id)
         message = await channel.fetch_message(int(config['MESSAGE_ID']))
         await message.delete()
-        panel_message_id = await create_panel_form(channel)
+        embed, view = await create_panel_form(channel)
+        panel_message = await channel.send(embed=embed, view=view)
+        panel_message_id = panel_message.id
         config['MESSAGE_ID'] = panel_message_id
         write_config(config)
     except Exception as e:
@@ -85,17 +88,24 @@ async def on_message(message):
         return
 
 async def play(message):
-    def play_next_music(err):
+    async def play_next_music(err, voice_client, panel_message):
         if err:
             print(err)
         else:
             del play_queue[0]
             if not play_queue:
+                embed = discord.Embed (title="현재 재생중인 곡이 없어요.")
+                await panel_message.edit(embed=embed)
                 return
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(play_queue[0]['url'], download=False)
                 url2 = info['url']
-            voice_client.play(discord.FFmpegPCMAudio(executable=ffmpeg_path, source=url2, **ffmpeg_options), after=play_next_music)    
+            embed, view = await create_panel_form(message.channel,play_queue)
+            await panel_message.edit(embed=embed, view=view)
+            voice_client.play(
+                discord.FFmpegPCMAudio(executable=ffmpeg_path, source=url2, **ffmpeg_options),
+                after=lambda e: asyncio.run_coroutine_threadsafe(play_next_music(e, voice_client, panel_message), voice_client.loop)
+            )    
     
     if message.author.voice is None:
         await message.channel.send("음성 채널에 먼저 접속해 주세요.")
@@ -129,15 +139,16 @@ async def play(message):
     video_info['requester'] = message.author.mention
     play_queue.append(video_info)
     panel_message = await message.channel.fetch_message(int(config['MESSAGE_ID']))
-    #대기열 등록
-    if voice_client.is_playing():
-        await message.channel.send(f"대기열 등록\n제목: [{video_info['title']}]({video_info['url']})\n재생 시간: {video_info['duration']}")
-    else:
+    embed, view = await create_panel_form(message.channel,play_queue)
+    await panel_message.edit(embed=embed, view=view)
+    if not voice_client.is_playing():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             url2 = info['url']
-        await panel_message.edit(embed=playing_panel_form(video_info))
-        voice_client.play(discord.FFmpegPCMAudio(executable=ffmpeg_path, source=url2, **ffmpeg_options), after=play_next_music)
+        voice_client.play(
+            discord.FFmpegPCMAudio(executable=ffmpeg_path, source=url2, **ffmpeg_options),
+            after=lambda e: asyncio.run_coroutine_threadsafe(play_next_music(e, voice_client, panel_message), voice_client.loop)
+        )
 
 #명령어
 #========================================================================================
@@ -156,7 +167,9 @@ async def own_channel(ctx, name='우흥이-전용'):
 @bot.command(name='패널생성')
 @commands.has_permissions(administrator=True)
 async def control_pannel(ctx):
-    panel_message_id = await create_panel_form(ctx.channel)
+    embed, view = await create_panel_form(ctx.channel)
+    panel_message = await ctx.send(embed=embed, view=view)
+    panel_message_id = panel_message.id
     config['MESSAGE_ID'] = panel_message_id
     write_config(config)
     await ctx.message.delete()
