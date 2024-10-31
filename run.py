@@ -59,15 +59,6 @@ async def on_ready():
     print("봇 준비완료")
 
 @bot.event
-async def on_guild_join(guild):
-    print("서버 입장")
-    #DB에 정보 등록
-
-@bot.event
-async def on_guild_remove(guild):
-    print("서버 제거")
-
-@bot.event
 async def on_message(message):
     if message.author.bot:
         return 
@@ -149,13 +140,9 @@ async def play(message):
 
 #명령어
 #========================================================================================
-@bot.command(name="t")
-async def test(ctx):
-    await create_panel_form(ctx)
-
 @bot.command(name='전용채널')
 @commands.has_permissions(administrator=True)
-async def own_channel(ctx, name='우흥이-전용'):
+async def own_channel(ctx, name='music-bot'):
     await ctx.guild.create_text_channel(name)
     own_channel_id = ctx.channel.id
     config['CHANNEL_ID'] = own_channel_id
@@ -171,29 +158,4 @@ async def control_pannel(ctx):
     write_config(config)
     await ctx.message.delete()
 
-@bot.command(name="skip")
-async def st(ctx):
-    voice_client = ctx.guild.voice_client
-    if voice_client:
-        voice_client.stop()
-
-@bot.command(name="pause")
-async def pause(ctx):
-    voice_client = ctx.guild.voice_client
-    if voice_client:
-        voice_client.pause()
-    
-@bot.command(name="resume")
-async def unpause(ctx):
-    voice_client = ctx.guild.voice_client
-    if voice_client:
-        voice_client.resume()
-
-@bot.command(name="queue")
-async def queue(ctx):
-    template = "현재 대기열\n\n"
-    for video_info in play_queue:
-        template += f"제목: [{video_info['title']}]({video_info['url']})  재생 시간: {video_info['duration']}\n"
-    embed = discord.Embed(description=template)
-    await ctx.send(embed=embed)
 bot.run(bot_token)
