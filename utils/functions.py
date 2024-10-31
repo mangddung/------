@@ -78,10 +78,10 @@ async def create_panel_form(channel,play_queue = []):
     if play_queue:
         if len(play_queue) > 1:
             options = []
-            for music in play_queue[1:10]:
+            for idx, music in enumerate(play_queue[1:], start=1):
                 member = channel.guild.get_member(int(music['requester'].strip("<@!>")))
                 requester_nick = member.nick if member.nick else "Unknown"
-                options.append(discord.SelectOption(label=music['title'], description=f"요청자: {requester_nick}, 영상 길이: {music['duration']}"))
+                options.append(discord.SelectOption(label=music['title'], description=f"요청자: {requester_nick}, 영상 길이: {music['duration']}", value=idx))
             placeholder = f"다음 노래가 {len(play_queue)-1}개 있어요"
         else: 
             options = [discord.SelectOption(label="없어요."),]
@@ -118,8 +118,13 @@ async def create_panel_form(channel,play_queue = []):
 
     #대기열 목록
     async def queue_dropdown_callback(interaction: discord.Interaction):
-        if len(play_queue) > 1:
-            await interaction.response.send_message("아직 기능 없어",ephemeral=True)
+        voice_client = channel.guild.voice_client
+        if len(play_queue) > 1 and voice_client:
+            selected_option = int(queue_dropdown.values[0])
+            selected_music = play_queue.pop(selected_option)
+            play_queue.insert(1,selected_music)
+            voice_client.stop()
+            await interaction.response.send_message(f"{play_queue[1]['title']}을 재생합니다.",ephemeral=True)
         else:
             await interaction.response.send_message("아니 없어요",ephemeral=True)
     
