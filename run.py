@@ -132,6 +132,8 @@ async def play(message):
     embed, view = await create_panel_form(message.channel,play_queue)
     await panel_message.edit(embed=embed, view=view)
     if not voice_client.is_playing():
+        result_message = await message.channel.send(f"{video_info['title']}을 재생합니다.")
+        await result_message.delete(delay=5)
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             url2 = info['url']
@@ -139,6 +141,9 @@ async def play(message):
             discord.FFmpegPCMAudio(executable=ffmpeg_path, source=url2, **ffmpeg_options),
             after=lambda e: asyncio.run_coroutine_threadsafe(play_next_music(e, voice_client, panel_message), voice_client.loop)
         )
+    else:
+        result_message = await message.channel.send(f"{video_info['title']}을 대기열에 등록합니다.")
+        await result_message.delete(delay=5)
 
 #명령어
 #========================================================================================
