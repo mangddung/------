@@ -1,5 +1,6 @@
 '''
-드롭다운 메뉴 선택시 해당곡 재생으로 바꾸기
+전체곡 반복, 한 곡 반복, 플레이리스트
+기능 제작 예정
 '''
 
 import asyncio
@@ -42,7 +43,7 @@ ydl_opts = {
 #========================================================================================
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(name="테스트"))
+    await bot.change_presence(activity=discord.Game(name="작동"))
     try:
         channel = bot.get_channel(own_channel_id)
         message = await channel.fetch_message(int(config['MESSAGE_ID']))
@@ -53,7 +54,7 @@ async def on_ready():
         config['MESSAGE_ID'] = panel_message_id
         write_config(config)
     except Exception as e:
-        print(f"전용 채널 미스 또는 에러 : {e}")
+        print(f"패널 메세지 재생성 실패 : {e}")
     print("봇 준비완료")
 
 @bot.event
