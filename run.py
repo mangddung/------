@@ -9,7 +9,8 @@ from discord.ext import commands
 import yt_dlp
 from utils.functions import *
 
-ffmpeg_path = "C:\\ffmpeg\\bin\\ffmpeg.exe"  # FFmpeg 경로
+# ffmpeg_path = "C:\\ffmpeg\\bin\\ffmpeg.exe"  # FFmpeg 경로
+ffmpeg_path = 'ffmpeg'
 
 config = read_config()
 bot_prefix = config['BOT_PREFIX']
