@@ -42,6 +42,8 @@ ydl_opts = {
 }
 #이벤트
 #========================================================================================
+
+
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="작동"))
@@ -79,6 +81,7 @@ async def play(message):
             if not play_queue:
                 embed = discord.Embed (title="현재 재생중인 곡이 없어요.")
                 await panel_message.edit(embed=embed)
+                await voice_client.disconnect()
                 return
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(play_queue[0]['url'], download=False)
