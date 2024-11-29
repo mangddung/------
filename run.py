@@ -1,6 +1,7 @@
 '''
 전체곡 반복, 한 곡 반복, 플레이리스트
 기능 제작 예정
+대기열 곡 삭제 기능
 '''
 
 import asyncio
@@ -81,7 +82,15 @@ async def play(message):
             if not play_queue:
                 embed = discord.Embed (title="현재 재생중인 곡이 없어요.")
                 await panel_message.edit(embed=embed)
-                await voice_client.disconnect()
+                async def leave_channel_after_delay():
+                    await asyncio.sleep(300)  # 5분 (300초) 대기
+                    if not play_queue:  # 5분 후에도 대기열이 비어 있으면 실행
+                        voice_client = message.guild.voice_client
+                        if voice_client:
+                            await voice_client.disconnect()
+                            notice_message = await panel_message.channel.send("재생 대기열이 비어 있어 음성 채널에서 나갔어요.")
+                            await notice_message.delete(delay=5)
+                asyncio.create_task(leave_channel_after_delay())
                 return
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(play_queue[0]['url'], download=False)
@@ -129,7 +138,7 @@ async def play(message):
     await panel_message.edit(embed=embed, view=view)
     if not voice_client.is_playing():
         result_message = await message.channel.send(f"{video_info['title']}을 재생합니다.")
-        await result_message.delete(delay=5)
+        await result_message.delete(delay=3)
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             url2 = info['url']
@@ -139,7 +148,7 @@ async def play(message):
         )
     else:
         result_message = await message.channel.send(f"{video_info['title']}을 대기열에 등록합니다.")
-        await result_message.delete(delay=5)
+        await result_message.delete(delay=3)
 
 #명령어
 #========================================================================================
