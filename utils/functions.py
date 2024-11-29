@@ -2,7 +2,6 @@ from youtubesearchpython import VideosSearch, Video
 import discord
 from discord.ext import commands
 from datetime import timedelta
-import random
 
 search_priority = [
     # "가사",
@@ -19,9 +18,7 @@ search_filter = [
 panel_message_list = {
     'resume' : "▶ 재생",
     'pause' : "∥ 중지",
-    'skip' : "▶| 스킵",
-    'repeat': "🔁 반복",
-    'shuffle': "🔀 셔플",
+    'skip' : "▶| 스킵"
 }
 
 def get_video_url(query,search_count=1):
@@ -78,10 +75,23 @@ async def create_panel_form(channel,play_queue = []):
     # 버튼 생성
     play_btn = discord.ui.Button(label=panel_message_list['pause'], style=discord.ButtonStyle.secondary)
     skip_btn = discord.ui.Button(label=panel_message_list['skip'], style=discord.ButtonStyle.secondary)
-    # shuffle_btn = discord.ui.Button(label=panel_message_list['shuffle'], style=discord.ButtonStyle.secondary)
-    # repeat_btn = discord.ui.Button(label=panel_message_list['repeat'], style=discord.ButtonStyle.secondary)
-
-    embed, queue_dropdown = embed_and_dropdown(channel, play_queue)
+    if play_queue:
+        if len(play_queue) > 1:
+            options = []
+            for idx, music in enumerate(play_queue[1:], start=1):
+                member = channel.guild.get_member(int(music['requester'].strip("<@!>")))
+                requester_nick = member.nick if member.nick else "Unknown"
+                options.append(discord.SelectOption(label=music['title'], description=f"요청자: {requester_nick}, 영상 길이: {music['duration']}", value=idx))
+            placeholder = f"다음 노래가 {len(play_queue)-1}개 있어요"
+        else: 
+            options = [discord.SelectOption(label="없어요."),]
+            placeholder = "다음 노래가 없어요."
+        embed = playing_embed_form(play_queue[0])
+    else:
+        embed = discord.Embed (title="재생중인 곡이 없어요.")
+        options = [discord.SelectOption(label="없어요."),]
+        placeholder = "다음 노래가 없어요."
+    queue_dropdown = discord.ui.Select(placeholder=placeholder, options=options, min_values=1, max_values=1) #다음곡 선택 재생 기능 만들때  max_value바꾸기
 
     # 중지, 재생 버튼
     async def play_btn_callback(interaction):
@@ -106,29 +116,6 @@ async def create_panel_form(channel,play_queue = []):
             #스킵 한 후 다음 곡 여부 확인해서 패널 업데이트
             await interaction.response.edit_message(content="곡이 스킵되었습니다.", view=view)
 
-    # #반복 버튼
-    # async def repeat_btn_callback(interaction):
-    #     voice_client = channel.guild.voice_client
-    #     # if voice_client and play_queue:
-    #     #     if repeat == repeat_circle[0]:
-    #     #         repeat = repeat_circle[1]
-    #     #     elif repeat == repeat_circle[1]:
-    #     #         repeat = repeat_circle[2]
-    #     #     else:
-    #     #         repeat = repeat_circle[0]
-    #     #     await interaction.response.edit_message(content="반복 버튼 누름", view=view)
-
-    # #셔플 버튼
-    # async def shuffle_btn_callback(interaction):
-    #     voice_client = channel.guild.voice_client
-    #     if len(play_queue) > 1 and voice_client:
-    #         waiting_queue = play_queue[1:] #대기 목록만 가져오기
-    #         del play_queue[1:]
-    #         random.shuffle(waiting_queue) #셔플
-    #         play_queue.append(waiting_queue)
-    #         embed, queue_dropdown = embed_and_dropdown(channel, play_queue)
-    #         await interaction.response.edit_message(content="셔플 버튼 누름", view=view)
-
     #대기열 목록
     async def queue_dropdown_callback(interaction: discord.Interaction):
         voice_client = channel.guild.voice_client
@@ -143,16 +130,12 @@ async def create_panel_form(channel,play_queue = []):
     
     play_btn.callback = play_btn_callback  # 중지, 재생 버튼
     skip_btn.callback = skip_btn_callback  # 스킵 버튼
-    # repeat_btn.callback = repeat_btn_callback #반복 버튼
-    # shuffle_btn.callback = shuffle_btn_callback #셔플 버튼
     queue_dropdown.callback = queue_dropdown_callback
 
     # 버튼을 포함한 뷰 생성
     view.add_item(queue_dropdown)
     view.add_item(play_btn)
     view.add_item(skip_btn)
-    # view.add_item(repeat_btn)
-    # view.add_item(shuffle_btn)
 
     return embed,view
 
@@ -181,24 +164,3 @@ def write_config(config, filename='config.txt'):
     with open(filename, 'w') as file:
         for key, value in config.items():
             file.write(f"{key}={value}\n")
-
-def embed_and_dropdown(channel, play_queue):
-    if play_queue:
-        if len(play_queue) > 1:
-            options = []
-            for idx, music in enumerate(play_queue[1:], start=1):
-                member = channel.guild.get_member(int(music['requester'].strip("<@!>")))
-                requester_nick = member.nick if member.nick else "Unknown"
-                options.append(discord.SelectOption(label=music['title'], description=f"요청자: {requester_nick}, 영상 길이: {music['duration']}", value=idx))
-            placeholder = f"다음 노래가 {len(play_queue)-1}개 있어요"
-        else: 
-            options = [discord.SelectOption(label="없어요."),]
-            placeholder = "다음 노래가 없어요."
-        embed = playing_embed_form(play_queue[0])
-    else:
-        embed = discord.Embed (title="재생중인 곡이 없어요.")
-        options = [discord.SelectOption(label="없어요."),]
-        placeholder = "다음 노래가 없어요."
-    queue_dropdown = discord.ui.Select(placeholder=placeholder, options=options, min_values=1, max_values=1) #다음곡 선택 재생 기능 만들때  max_value바꾸기
-
-    return embed,queue_dropdown
