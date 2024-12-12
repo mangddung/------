@@ -78,7 +78,7 @@ async def create_panel_form(channel,play_queue = []):
     if play_queue:
         if len(play_queue) > 1:
             options = []
-            for idx, music in enumerate(play_queue[1:], start=1):
+            for idx, music in enumerate(play_queue[1:21], start=1):
                 member = channel.guild.get_member(int(music['requester'].strip("<@!>")))
                 requester_nick = member.nick if member.nick else "Unknown"
                 options.append(discord.SelectOption(label=music['title'], description=f"요청자: {requester_nick}, 영상 길이: {music['duration']}", value=idx))
