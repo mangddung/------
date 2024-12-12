@@ -83,7 +83,7 @@ async def play(message):
                 embed = discord.Embed (title="현재 재생중인 곡이 없어요.")
                 await panel_message.edit(embed=embed)
                 async def leave_channel_after_delay():
-                    await asyncio.sleep(300)  # 5분 (300초) 대기
+                    await asyncio.sleep(600)  # 5분 (300초) 대기
                     if not play_queue:  # 5분 후에도 대기열이 비어 있으면 실행
                         voice_client = message.guild.voice_client
                         if voice_client:
