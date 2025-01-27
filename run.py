@@ -73,6 +73,19 @@ async def on_message(message):
         await message.delete()
         return
 
+@bot.event
+async def on_voice_state_update(member, before, after):
+    if bot.voice_clients:  # 봇이 음성 채널에 연결되어 있는지 확인
+        voice_channel = bot.voice_clients[0].channel  # 봇이 연결된 음성 채널 객체 가져오기
+        if voice_channel: # voice_channel이 None이 아닌지 확인 (봇이 연결이 끊어졌을 경우를 대비)
+            members_in_channel = voice_channel.members  # 채널에 있는 멤버 목록 가져오기
+            member_count = 0
+            for member in members_in_channel:
+                if not member.bot:
+                    member_count += 1
+            if member_count == 0:
+                await bot.voice_clients[0].disconnect()
+
 async def play(message):
     async def play_next_music(err, voice_client, panel_message):
         if err:
