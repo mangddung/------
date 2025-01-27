@@ -152,22 +152,21 @@ async def play(message):
 
 #명령어
 #========================================================================================
-@bot.command(name='전용채널')
-@commands.has_permissions(administrator=True)
-async def own_channel(ctx, name='music-bot'):
-    await ctx.guild.create_text_channel(name)
-    own_channel_id = ctx.channel.id
-    config['CHANNEL_ID'] = own_channel_id
-    write_config(config)
-
 @bot.command(name='패널생성')
 @commands.has_permissions(administrator=True)
 async def control_pannel(ctx):
-    embed, view = await create_panel_form(ctx.channel)
-    panel_message = await ctx.send(embed=embed, view=view)
-    panel_message_id = panel_message.id
-    config['MESSAGE_ID'] = panel_message_id
-    write_config(config)
+    try:
+        global panel_message_id
+        global own_channel_id
+        embed, view = await create_panel_form(ctx.channel)
+        panel_message = await ctx.send(embed=embed, view=view)
+        panel_message_id = panel_message.id
+        own_channel_id = ctx.channel.id
+        config['CHANNEL_ID'] = own_channel_id
+        config['MESSAGE_ID'] = panel_message_id
+        write_config(config)
+    except:
+        await ctx.send("패널 생성 실패")
     await ctx.message.delete()
 
 bot.run(bot_token)
